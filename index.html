@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TERMINAL: EID_MUBARAK_2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;500;700&family=Hind+Siliguri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-green: #00ff41;
+            --dark-bg: #000800;
+            --hacker-glow: rgba(0, 255, 65, 0.2);
+            --glitch-color: #ff003c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Fira Code', 'Hind Siliguri', monospace;
+            background-color: var(--dark-bg);
+            color: var(--neon-green);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Matrix Background */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            opacity: 0.15;
+        }
+
+        /* Scanline Effect */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 20;
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* Main Console Card */
+        .terminal-card {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 450px;
+            background: rgba(0, 10, 0, 0.85);
+            border: 2px solid var(--neon-green);
+            border-radius: 5px;
+            padding: 30px 20px;
+            box-shadow: 0 0 20px var(--hacker-glow), inset 0 0 10px var(--hacker-glow);
+            text-align: left;
+        }
+
+        .terminal-header {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            background: var(--neon-green);
+            color: black;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .step { display: none; opacity: 0; }
+        .step.active { 
+            display: block; 
+            animation: fadeIn 0.3s ease-forward;
+            opacity: 1;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .command-line {
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .command-line::before {
+            content: "root@Hasan_Mahmud:~# ";
+            color: #888;
+        }
+
+        .glitch {
+            font-size: 32px;
+            font-weight: bold;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 0.05em 0 0 rgba(255,0,0,0.75),
+                        -0.025em -0.05em 0 rgba(0,255,0,0.75),
+                        0.025em 0.05em 0 rgba(0,0,255,0.75);
+            animation: glitch 500ms infinite;
+            margin: 20px 0;
+            color: white;
+            text-align: center;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75); }
+            14% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75); }
+            15% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75); }
+            49% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75); }
+            50% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75); }
+            99% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75); }
+            100% { text-shadow: -0.025em 0 0 rgba(255,0,0,0.75), -0.025em -0.025em 0 rgba(0,255,0,0.75); }
+        }
+
+        .hacker-btn {
+            background: transparent;
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            padding: 10px 20px;
+            font-family: 'Fira Code', monospace;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hacker-btn:hover {
+            background: var(--neon-green);
+            color: black;
+            box-shadow: 0 0 15px var(--neon-green);
+        }
+
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .cyber-profile {
+            width: 120px;
+            height: 120px;
+            border: 2px solid var(--neon-green);
+            padding: 5px;
+            filter: grayscale(100%) brightness(1.2) contrast(1.2);
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--neon-green);
+            margin-left: 5px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .status-bar {
+            font-size: 12px;
+            margin-top: 20px;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- যুক্ত করা হয়েছে নতুন ঈদ মিউজিক (ও মন রমজানের ওই রোজার শেষে) -->
+    <audio id="bg-audio" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+        <source src="https://github.com/HasanMahmud-IT/Files/raw/main/O-Mon-Romjaner-Oi-Rozar-Sheshe.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="terminal-card">
+        <div class="terminal-header">
+            <span>TERMINAL v4.0.1</span>
+            <span>[ SYSTEM ACTIVE ]</span>
+        </div>
+
+        <!-- Step 1: Initial -->
+        <div class="step active" id="step1">
+            <span class="command-line">init --system_greet</span>
+            <div style="text-align: center; margin: 30px 0;">
+                <img src="https://lh3.googleusercontent.com/d/1MHoS06F_ke462pBg3uueWtW5l9csk5sj" style="width: 80px; filter: invert(1) brightness(2);" alt="IT LOGO">
+                <h2 style="margin-top:15px; letter-spacing: 2px;">HASAN MAHMUD</h2>
+            </div>
+            <p style="color: #aaa; font-size: 14px; line-height: 1.4;">Incoming encrypted message from: <br><span style="color: var(--neon-green)">Hasan Mahmud</span></p>
+            <button class="hacker-btn" onclick="startDecrypt()">[ DECRYPT MESSAGE ]</button>
+        </div>
+
+        <!-- Step 2: Decrypting -->
+        <div class="step" id="step2">
+            <span class="command-line">decrypting_assets...</span>
+            <div id="type-text" style="min-height: 120px; font-size: 18px; margin-top: 20px; line-height: 1.6;"></div>
+            <div class="status-bar" id="progress-bar">Loading core modules: 0%</div>
+        </div>
+
+        <!-- Step 3: Final -->
+        <div class="step" id="step3">
+            <div class="profile-container">
+                <img src="https://lh3.googleusercontent.com/d/157sDKSRAnyn_mCT0-OmoWZSRyI6YqkXx" class="cyber-profile" alt="Hasan">
+                <div class="glitch">EID MUBARAK</div>
+            </div>
+            <div style="font-size: 15px; border-left: 3px solid var(--neon-green); padding-left: 15px;">
+                <p>SUBJECT: EID_CELEBRATION_2026</p>
+                <p>STATUS: BLESSED</p>
+                <p style="margin-top: 10px; color: #fff;">আল্লাহ আপনার এবং আপনার পরিবারের উপর অফুরন্ত রহমত ও খুশি বর্ষণ করুন।</p>
+            </div>
+            
+            <div style="margin-top: 25px; text-align: right;">
+                <p style="font-size: 12px; color: #555;">SIGNED BY:</p>
+                <p style="font-weight: bold; letter-spacing: 1px;">HASAN MAHMUD</p>
+            </div>
+
+            <button class="hacker-btn" style="font-size: 12px;" onclick="location.reload()">[ REBOOT_SYSTEM ]</button>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Effect
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&*";
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for (let x = 0; x < columns; x++) drops[x] = 1;
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#0F0";
+            ctx.font = fontSize + "px monospace";
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 35);
+
+        // Logic
+        function startDecrypt() {
+            const audio = document.getElementById('bg-audio');
+            audio.volume = 0.6;
+            audio.play().catch(err => {
+                console.log("Browser blocked autoplay. Audio will play after interaction.");
+            });
+            goToStep(2);
+        }
+
+        const messages = [
+            "> Initializing neural link...",
+            "> Bypassing sadness firewall...",
+            "> Loading happiness.exe...",
+            "> রমজান শেষে এলো খুশির ঈদ...",
+            "> রঙিন হোক আপনার প্রতিটি মুহূর্ত।",
+            "> পবিত্র দিনে জানাই অনেক ভালোবাসা।"
+        ];
+
+        function goToStep(s) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step${s}`).classList.add('active');
+            if(s === 2) startTyping(0);
+        }
+
+        async function startTyping(idx) {
+            const box = document.getElementById('type-text');
+            const progress = document.getElementById('progress-bar');
+            
+            if (idx >= messages.length) {
+                setTimeout(() => goToStep(3), 1000);
+                return;
+            }
+
+            let text = messages[idx];
+            let i = 0;
+            let currentLine = document.createElement('div');
+            currentLine.style.marginBottom = "8px";
+            box.appendChild(currentLine);
+
+            progress.innerText = `Executing: ${Math.round((idx/messages.length)*100)}% complete...`;
+
+            return new Promise(resolve => {
+                const interval = setInterval(() => {
+                    currentLine.innerHTML = text.substring(0, i) + '<span class="typing-cursor"></span>';
+                    i++;
+                    if (i > text.length) {
+                        clearInterval(interval);
+                        currentLine.innerHTML = text; // Remove cursor
+                        setTimeout(() => resolve(startTyping(idx + 1)), 400);
+                    }
+                }, 40);
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
